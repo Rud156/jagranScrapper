@@ -25,6 +25,7 @@ def get_feedLinks():
     urlList = tree.xpath('//table/tr/td/a/@href')
     filteredList = []
     for i in range(0, len(urlList)):
+
         if i % 2 == 0:
             filteredList.append(urlList[i])
     for url in filteredList:
@@ -35,6 +36,7 @@ def get_page(link):
     page = requests.get(link)
     tree = html.fromstring(page.content)
     metaTitle = tree.xpath('//meta[@property="og:title"]/@content')
+
     metaKeywords = tree.xpath('//meta[@name="keywords"]/@content')
     body = tree.xpath('//div[@class="article-content"]/p/text()')
     title = tree.xpath('//section[@class="title"]/h1/text()')
@@ -44,7 +46,8 @@ def get_page(link):
     for item in body:
         filteredBody += item.encode('utf-8')
 
-    if len(metaTitle) > 0:
+
+        if len(metaTitle) > 0:
         metaTitle = metaTitle[0].encode('utf-8')
     else:
         metaTitle = ''
@@ -90,6 +93,7 @@ if __name__ == '__main__':
             metaTitle, metaKeywords, body, summary, title = get_page(allFeedLinks[i])
             hashValue = hashlib.md5(title + summary + metaTitle).hexdigest()
             mongoCheck(hashValue, title, summary, metaTitle, metaKeywords, body, i)
+        global allFeedLinks = []
         print 'All Done. Wowser!!!!!!'
         time.sleep(600)
 
