@@ -1,6 +1,7 @@
 import feedparser
 import requests
 import hashlib
+import time
 from lxml import html
 from pymongo import MongoClient
 
@@ -81,13 +82,15 @@ def mongoCheck(hashValue, title, summary, metaTitle, metaKeywords, body, countVa
 
 
 if __name__ == '__main__':
-    print 'Service Started'
-    get_feedLinks()
-    print 'Got All Links'
-    for i in range(0, len(allFeedLinks)):
-        metaTitle, metaKeywords, body, summary, title = get_page(allFeedLinks[i])
-        hashValue = hashlib.md5(title + summary + metaTitle).hexdigest()
-        mongoCheck(hashValue, title, summary, metaTitle, metaKeywords, body, i)
-    print 'All Done. Wowser!!!!!!'
+    while(true):
+        print 'Service Started'
+        get_feedLinks()
+        print 'Got All Links'
+        for i in range(0, len(allFeedLinks)):
+            metaTitle, metaKeywords, body, summary, title = get_page(allFeedLinks[i])
+            hashValue = hashlib.md5(title + summary + metaTitle).hexdigest()
+            mongoCheck(hashValue, title, summary, metaTitle, metaKeywords, body, i)
+        print 'All Done. Wowser!!!!!!'
+        time.sleep(600)
 
 
