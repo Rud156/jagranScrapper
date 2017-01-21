@@ -82,11 +82,11 @@ def mongoCheck(hashValue, title, summary, metaTitle, metaKeywords, body, countVa
 
 
 if __name__ == '__main__':
-    while(true):
+    while(True):
         print 'Service Started'
         get_feedLinks()
         print 'Got All Links'
-        for i in range(0, len(allFeedLinks)):
+        for i in range(0, 2):
             metaTitle, metaKeywords, body, summary, title = get_page(allFeedLinks[i])
             hashValue = hashlib.md5(title + summary + metaTitle).hexdigest()
             mongoCheck(hashValue, title, summary, metaTitle, metaKeywords, body, i)
