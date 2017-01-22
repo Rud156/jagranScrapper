@@ -8,31 +8,44 @@ from pymongo import MongoClient
 client = MongoClient()
 dataBase = client.feedParser
 collection = dataBase.feeds
-
-allFeedLinks = []
+global allFeedLinks
 
 
 def parse_feed(url):
-    feed = feedparser.parse(url)
-    entries = feed['entries']
-    for value in entries:
-        allFeedLinks.append(value.link)
+    try:
+        feed = feedparser.parse(url)
+        entries = feed['entries']
+        for value in entries:
+            allFeedLinks.append(value.link)
+    except:
+        print 'Error Parsing Feed'
 
 
-def get_feedLinks():
-    page  = requests.get('http://www.jagran.com/rss-hindi.html')
-    tree = html.fromstring(page.content)
-    urlList = tree.xpath('//table/tr/td/a/@href')
-    filteredList = []
-    for i in range(0, len(urlList)):
-        if i % 2 == 0:
-            filteredList.append(urlList[i])
-    for url in filteredList:
-        parse_feed(url)
+
+def get_feed_links():
+    try:
+        page = requests.get('http://www.jagran.com/rss-hindi.html')
+        tree = html.fromstring(page.content)
+        urlList = tree.xpath('//table/tr/td/a/@href')
+        filteredList = []
+        for i in range(0, len(urlList)):
+            if i % 2 == 0:
+                filteredList.append(urlList[i])
+        for url in filteredList:
+            parse_feed(url)
+        return True
+    except requests.ConnectionError, requests.ConnectTimeout:
+        print "Connection Error Occurred"
+        return False
 
 
 def get_page(link):
-    page = requests.get(link)
+    try:
+        page = requests.get(link)
+    except requests.ConnectionError, requests.ConnectTimeout:
+        print "Connection Error"
+        return "", [], "", "", "", False
+
     tree = html.fromstring(page.content)
     metaTitle = tree.xpath('//meta[@property="og:title"]/@content')
     metaKeywords = tree.xpath('//meta[@name="keywords"]/@content')
@@ -53,7 +66,7 @@ def get_page(link):
     else:
         summary = ''
     if len(title) > 0:
-        title  = title[0].encode('utf-8')
+        title = title[0].encode('utf-8')
     else:
         title = ''
     if len(metaKeywords) > 0:
@@ -61,7 +74,7 @@ def get_page(link):
     else:
         metaKeywords = []
 
-    return  metaTitle, metaKeywords, filteredBody, summary, title
+    return metaTitle, metaKeywords, filteredBody, summary, title, True
 
 
 def mongoCheck(hashValue, title, summary, metaTitle, metaKeywords, body, countValue):
@@ -74,25 +87,31 @@ def mongoCheck(hashValue, title, summary, metaTitle, metaKeywords, body, countVa
         'summary': summary
     }
     data = collection.find_one({'_id': hashValue})
-    if data != None:
+    if data is not None:
         print 'Data Already Exists: ' + str(countValue)
         return
+
     collection.insert_one(dataSet)
     print 'Data Added: ' + str(countValue)
 
 
 if __name__ == '__main__':
-    while(True):
+    while (True):
         print 'Service Started'
-        get_feedLinks()
-        print 'Got All Links'
-        for i in range(0, len(allFeedLinks)):
-            metaTitle, metaKeywords, body, summary, title = get_page(allFeedLinks[i])
-            hashValue = hashlib.md5(title + summary + metaTitle).hexdigest()
-            mongoCheck(hashValue, title, summary, metaTitle, metaKeywords, body, i)
         global allFeedLinks
         allFeedLinks = []
+        retValue = get_feed_links()
+        if retValue:
+            print 'Got All Links'
+            for i in range(0, len(allFeedLinks)):
+                metaTitle, metaKeywords, body, summary, title, success = get_page(allFeedLinks[i])
+                if success:
+                    hashValue = hashlib.md5(title + summary + metaTitle).hexdigest()
+                    mongoCheck(hashValue, title, summary, metaTitle, metaKeywords, body, i)
+                else:
+                    print "Unable to get the reuqested page!!! Check Connection"
+
+        else:
+            print "Unable to get all links!!! Check Connection"
         print 'All Done. Wowser!!!!!!'
         time.sleep(600)
-
-
