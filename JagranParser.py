@@ -8,7 +8,7 @@ from pymongo import MongoClient
 client = MongoClient()
 dataBase = client.feedParser
 collection = dataBase.feeds
-global allFeedLinks
+allFeedLinks = []
 
 
 def parse_feed(url):
@@ -19,7 +19,6 @@ def parse_feed(url):
             allFeedLinks.append(value.link)
     except:
         print 'Error Parsing Feed'
-
 
 
 def get_feed_links():
@@ -96,22 +95,17 @@ def mongoCheck(hashValue, title, summary, metaTitle, metaKeywords, body, countVa
 
 
 if __name__ == '__main__':
-    while (True):
-        print 'Service Started'
-        global allFeedLinks
-        allFeedLinks = []
-        retValue = get_feed_links()
-        if retValue:
-            print 'Got All Links'
-            for i in range(0, len(allFeedLinks)):
-                metaTitle, metaKeywords, body, summary, title, success = get_page(allFeedLinks[i])
-                if success:
-                    hashValue = hashlib.md5(title + summary + metaTitle).hexdigest()
-                    mongoCheck(hashValue, title, summary, metaTitle, metaKeywords, body, i)
-                else:
-                    print "Unable to get the reuqested page!!! Check Connection"
-
-        else:
-            print "Unable to get all links!!! Check Connection"
-        print 'All Done. Wowser!!!!!!'
-        time.sleep(600)
+    print 'Service Started'
+    retValue = get_feed_links()
+    if retValue:
+        print 'Got All Links'
+        for i in range(0, len(allFeedLinks)):
+            metaTitle, metaKeywords, body, summary, title, success = get_page(allFeedLinks[i])
+            if success:
+                hashValue = hashlib.md5(title + summary + metaTitle).hexdigest()
+                mongoCheck(hashValue, title, summary, metaTitle, metaKeywords, body, i)
+            else:
+                print "Unable to get the reuqested page!!! Check Connection"
+    else:
+        print "Unable to get all links!!! Check Connection"
+    print 'All Done. Wowser!!!!!!'
