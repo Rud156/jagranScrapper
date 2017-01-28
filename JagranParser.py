@@ -6,11 +6,26 @@ import hashlib
 import time
 from lxml import html
 from pymongo import MongoClient
+from datetime import datetime
 
 client = MongoClient()
 dataBase = client.feedParser
 collection = dataBase.feeds
 allFeedLinks = []
+
+
+def write_logs_to_file(url, success, reason):
+    fx = open("JagranLogs.txt", "a")
+    if success:
+        fx.write("All feeds got and parsed. All complete for now..." + "\n")
+    else:
+        fx.write("Url: " + url + "\n")
+        fx.write("Reason: " + reason + "\n")
+
+    fx.write("Current Time: " + str(datetime.now().time()) + "\n")
+    if success:
+        fx.write("\n")
+    fx.close()
 
 
 def parse_feed(url):
@@ -20,7 +35,7 @@ def parse_feed(url):
         for value in entries:
             allFeedLinks.append(value.link)
     except:
-        print 'Error Parsing Feed'
+        write_logs_to_file(url, False, "Error Parsing Feed")
 
 
 def get_feed_links():
@@ -36,7 +51,7 @@ def get_feed_links():
             parse_feed(url)
         return True
     except requests.ConnectionError, requests.ConnectTimeout:
-        print "Connection Error Occurred"
+        write_logs_to_file("None", False, "Error In Connection")
         return False
 
 
@@ -44,7 +59,7 @@ def get_page(link):
     try:
         page = requests.get(link)
     except requests.ConnectionError, requests.ConnectTimeout:
-        print "Connection Error"
+        write_logs_to_file(link, False, "Connection Error")
         return "", [], "", "", "", False
 
     tree = html.fromstring(page.content)
@@ -110,4 +125,6 @@ if __name__ == '__main__':
                 print "Unable to get the reuqested page!!! Check Connection"
     else:
         print "Unable to get all links!!! Check Connection"
+        write_logs_to_file("None", False, "Not Able to get any feeds. Check Connection...")
     print 'All Done. Wowser!!!!!!'
+    write_logs_to_file("", True, "")
