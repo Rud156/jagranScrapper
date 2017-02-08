@@ -50,7 +50,7 @@ def get_feed_links():
         for url in filteredList:
             parse_feed(url)
         return True
-    except requests.ConnectionError, requests.ConnectTimeout:
+    except (requests.ConnectionError, requests.ConnectTimeout) as e:
         write_logs_to_file("None", False, "Error In Connection")
         return False
 
@@ -58,7 +58,7 @@ def get_feed_links():
 def get_page(link):
     try:
         page = requests.get(link)
-    except requests.ConnectionError, requests.ConnectTimeout:
+    except (requests.ConnectionError, requests.ConnectTimeout) as e:
         write_logs_to_file(link, False, "Connection Error")
         return "", [], "", "", "", False
 
@@ -93,9 +93,10 @@ def get_page(link):
     return metaTitle, metaKeywords, filteredBody, summary, title, True
 
 
-def mongoCheck(hashValue, title, summary, metaTitle, metaKeywords, body, countValue):
+def mongoCheck(hashValue, title, summary, metaTitle, metaKeywords, body, url, countValue):
     dataSet = {
         '_id': hashValue,
+        'url': url,
         'title': title,
         'meta_title': metaTitle,
         'meta_keywords': metaKeywords,
@@ -120,7 +121,7 @@ if __name__ == '__main__':
             metaTitle, metaKeywords, body, summary, title, success = get_page(allFeedLinks[i])
             if success:
                 hashValue = hashlib.md5(title + summary + metaTitle).hexdigest()
-                mongoCheck(hashValue, title, summary, metaTitle, metaKeywords, body, i)
+                mongoCheck(hashValue, title, summary, metaTitle, metaKeywords, body, allFeedLinks[i], i)
             else:
                 print "Unable to get the reuqested page!!! Check Connection"
     else:
