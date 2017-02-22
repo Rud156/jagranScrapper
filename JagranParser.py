@@ -50,7 +50,7 @@ def get_feed_links():
         for url in filteredList:
             parse_feed(url)
         return True
-    except (requests.ConnectionError, requests.ConnectTimeout) as e:
+    except Exception as e:
         write_logs_to_file("None", False, "Error In Connection")
         return False
 
@@ -58,7 +58,7 @@ def get_feed_links():
 def get_page(link):
     try:
         page = requests.get(link)
-    except (requests.ConnectionError, requests.ConnectTimeout) as e:
+    except Exception as e:
         write_logs_to_file(link, False, "Connection Error")
         return "", [], "", "", "", False
 
